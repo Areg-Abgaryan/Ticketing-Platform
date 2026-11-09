@@ -1,0 +1,4 @@
+ticketing:
+  inventory:
+    # How long tickets stay held while the user pays
+    reservation-ttl: 10m
