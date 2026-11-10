@@ -22,14 +22,21 @@ public final class Reservation {
     private final Instant expiresAt;
     private ReservationStatus status;
 
-    private Reservation(UUID id, UUID eventId, UUID userId, int quantity, Instant createdAt, Instant expiresAt) {
+    private Reservation(UUID id, UUID eventId, UUID userId, int quantity, Instant createdAt, Instant expiresAt,
+                        ReservationStatus status) {
         this.id = id;
         this.eventId = eventId;
         this.userId = userId;
         this.quantity = quantity;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
-        this.status = ReservationStatus.HELD;
+        this.status = status;
+    }
+
+    /** Rebuilds a reservation from stored values. Used by the persistence adapter, not by business code. */
+    public static Reservation rehydrate(UUID id, UUID eventId, UUID userId, int quantity, Instant createdAt,
+                                        Instant expiresAt, ReservationStatus status) {
+        return new Reservation(id, eventId, userId, quantity, createdAt, expiresAt, status);
     }
 
     /** Creates a new reservation in HELD status that expires {@code ttl} after {@code now}. */
@@ -44,7 +51,8 @@ public final class Reservation {
         if (ttl.isZero() || ttl.isNegative()) {
             throw new IllegalArgumentException("ttl must be positive: " + ttl);
         }
-        return new Reservation(UUID.randomUUID(), eventId, userId, quantity, now, now.plus(ttl));
+        return new Reservation(UUID.randomUUID(), eventId, userId, quantity, now, now.plus(ttl),
+                ReservationStatus.HELD);
     }
 
     /** Marks the reservation as paid. Allowed only while it is HELD and not yet expired. */

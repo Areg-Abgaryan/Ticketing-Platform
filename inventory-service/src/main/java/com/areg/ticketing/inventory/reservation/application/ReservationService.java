@@ -12,8 +12,14 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
-/** Application service: the operations of the ticket reservation flow. */
+/**
+ * Application service: the operations of the ticket reservation flow. Every operation runs in one transaction,
+ * so the stock and the reservation change together, and a concurrent change of the same stock is detected
+ * by the version check (optimistic locking) when the transaction commits.
+ */
+@Transactional
 public class ReservationService {
 
     private final StockRepository stocks;

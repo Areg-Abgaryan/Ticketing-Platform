@@ -34,6 +34,15 @@ public final class TicketStock {
         return new TicketStock(eventId, total, total);
     }
 
+    /** Rebuilds a stock from stored values. Used by the persistence adapter, not by business code. */
+    public static TicketStock rehydrate(UUID eventId, int total, int available) {
+        Objects.requireNonNull(eventId, "eventId");
+        if (total <= 0 || available < 0 || available > total) {
+            throw new IllegalArgumentException("Invalid stored stock: total=%d, available=%d".formatted(total, available));
+        }
+        return new TicketStock(eventId, total, available);
+    }
+
     /**
      * Holds {@code quantity} tickets for a user: if enough are available, decreases the stock and returns
      * Reserved with a new reservation; otherwise returns SoldOut and leaves the stock unchanged.
