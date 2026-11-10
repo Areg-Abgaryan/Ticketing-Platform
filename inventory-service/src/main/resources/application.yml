@@ -1,3 +1,10 @@
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      # fail at startup if the entities do not match the Flyway-managed schema
+      ddl-auto: validate
+
 ticketing:
   inventory:
     # How long tickets stay held while the user pays

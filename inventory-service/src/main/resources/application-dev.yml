@@ -1,0 +1,6 @@
+# Local development against the Postgres from docker-compose.yml (run with --spring.profiles.active=dev)
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/inventory
+    username: inventory
+    password: inventory
