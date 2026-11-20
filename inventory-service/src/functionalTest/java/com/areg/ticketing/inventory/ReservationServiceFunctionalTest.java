@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -30,6 +31,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /** The reservation flow against a real Postgres: schema, mapping, transactions and concurrent updates. */
 @SpringBootTest
+@ActiveProfiles("dev")
 @Testcontainers
 class ReservationServiceFunctionalTest {
 
