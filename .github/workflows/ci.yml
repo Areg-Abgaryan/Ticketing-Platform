@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  # Compile everything and run the fast unit tests. No Docker needed.
+  build-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -18,4 +19,22 @@ jobs:
           distribution: temurin
           java-version: 25
       - uses: gradle/actions/setup-gradle@v6
-      - run: ./gradlew build
+      - run: ./gradlew build -x functionalTest
+
+  # Each service as a whole against real infrastructure in Docker (Testcontainers).
+  # Runs only when build-unit is green; one parallel job per service.
+  functional:
+    needs: build-unit
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [inventory-service]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v6
+      - run: ./gradlew :${{ matrix.service }}:functionalTest
