@@ -30,6 +30,12 @@ class JpaStockRepository implements StockRepository {
                 .map(entity -> TicketStock.rehydrate(entity.eventId(), entity.total(), entity.available()));
     }
 
+    /** Inserts a new row. The entity has no version yet, so Spring Data persists it without a select. */
+    @Override
+    public void add(TicketStock stock) {
+        jpa.save(new TicketStockEntity(stock.eventId(), stock.total(), stock.available()));
+    }
+
     /**
      * Inserts a new stock, or updates {@code available} of an existing one. Inside the service transaction the
      * row loaded here is the same one that was loaded when the stock was read, so the version check at commit

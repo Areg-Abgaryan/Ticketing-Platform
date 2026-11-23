@@ -12,5 +12,9 @@ public interface StockRepository {
 
     Optional<TicketStock> findByEventId(UUID eventId);
 
+    /** Inserts a stock known to be new, without first looking it up. */
+    void add(TicketStock stock);
+
+    /** Stores the new {@code available} of an existing stock (inserts it if it does not exist yet). */
     void save(TicketStock stock);
 }

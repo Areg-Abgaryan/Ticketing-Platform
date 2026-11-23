@@ -23,7 +23,7 @@ public class StockService {
             throw new StockAlreadyExistsException(eventId);
         }
         final TicketStock stock = TicketStock.create(eventId, total);
-        stocks.save(stock);
+        stocks.add(stock);
         return stock;
     }
 

@@ -19,6 +19,11 @@ public class InMemoryStockRepository implements StockRepository {
     }
 
     @Override
+    public void add(TicketStock stock) {
+        save(stock);
+    }
+
+    @Override
     public void save(TicketStock stock) {
         stocks.put(stock.eventId(), stock);
     }

@@ -40,15 +40,27 @@ class JpaReservationRepository implements ReservationRepository {
                 .toList();
     }
 
-    /** Inserts a new reservation, or updates the status of an existing one (the only field that changes). */
+    /** Inserts a new row. The entity has no version yet, so Spring Data persists it without a select. */
+    @Override
+    public void add(Reservation reservation) {
+        jpa.save(toEntity(reservation));
+    }
+
+    /**
+     * Inserts a new reservation, or updates the status of an existing one (the only field that changes).
+     * The change is flushed at once so that an overdue hold is really out of HELD in the database before a
+     * new hold of the same user and event is inserted (the unique index allows only one HELD row).
+     */
     @Override
     public void save(Reservation reservation) {
-        final ReservationEntity entity = jpa.findById(reservation.id())
-                .orElseGet(() -> new ReservationEntity(reservation.id(), reservation.eventId(), reservation.userId(),
-                        reservation.quantity(), reservation.status(), reservation.createdAt(),
-                        reservation.expiresAt()));
+        final ReservationEntity entity = jpa.findById(reservation.id()).orElseGet(() -> toEntity(reservation));
         entity.setStatus(reservation.status());
-        jpa.save(entity);
+        jpa.saveAndFlush(entity);
+    }
+
+    private static ReservationEntity toEntity(Reservation reservation) {
+        return new ReservationEntity(reservation.id(), reservation.eventId(), reservation.userId(),
+                reservation.quantity(), reservation.status(), reservation.createdAt(), reservation.expiresAt());
     }
 
     private static Reservation toDomain(ReservationEntity entity) {

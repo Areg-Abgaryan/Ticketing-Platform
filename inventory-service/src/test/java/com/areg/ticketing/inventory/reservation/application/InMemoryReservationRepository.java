@@ -37,6 +37,11 @@ public class InMemoryReservationRepository implements ReservationRepository {
     }
 
     @Override
+    public void add(Reservation reservation) {
+        save(reservation);
+    }
+
+    @Override
     public void save(Reservation reservation) {
         reservations.put(reservation.id(), reservation);
     }

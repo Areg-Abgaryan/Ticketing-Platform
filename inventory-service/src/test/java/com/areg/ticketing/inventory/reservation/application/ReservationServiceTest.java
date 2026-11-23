@@ -106,6 +106,32 @@ class ReservationServiceTest {
         }
 
         @Test
+        void expiredHoldIsExpiredAndItsTicketsAreFreedBeforeTheNewReservation() {
+            final Reservation overdue = givenHeldReservation(2);
+            clock.advance(TTL);
+
+            service.reserve(userId, eventId, 3);
+
+            assertThat(reservations.findById(overdue.id()).orElseThrow().status())
+                    .isEqualTo(ReservationStatus.EXPIRED);
+            assertThat(available()).isEqualTo(7);
+            assertThat(reservations.findHeld(userId, eventId).orElseThrow().quantity()).isEqualTo(3);
+        }
+
+        @Test
+        void expiredHoldIsStillExpiredWhenTheNewReservationIsSoldOut() {
+            final Reservation overdue = givenHeldReservation(2);
+            clock.advance(TTL);
+
+            final ReservationResult result = service.reserve(userId, eventId, 11);
+
+            assertThat(result).isEqualTo(new ReservationResult.SoldOut(10));
+            assertThat(reservations.findById(overdue.id()).orElseThrow().status())
+                    .isEqualTo(ReservationStatus.EXPIRED);
+            assertThat(available()).isEqualTo(10);
+        }
+
+        @Test
         void failsForUnknownEvent() {
             assertThatThrownBy(() -> service.reserve(userId, eventId, 1))
                     .isInstanceOf(StockNotFoundException.class);
@@ -121,7 +147,7 @@ class ReservationServiceTest {
             final Reservation held = givenHeldReservation(2);
             clock.advance(Duration.ofSeconds(30));
 
-            service.confirm(held.id());
+            service.confirm(userId, held.id());
 
             assertThat(reservations.findById(held.id()).orElseThrow().status())
                     .isEqualTo(ReservationStatus.CONFIRMED);
@@ -133,7 +159,7 @@ class ReservationServiceTest {
             final Reservation held = givenHeldReservation(2);
             clock.advance(TTL);
 
-            assertThatThrownBy(() -> service.confirm(held.id()))
+            assertThatThrownBy(() -> service.confirm(userId, held.id()))
                     .isInstanceOf(IllegalReservationStateException.class);
             assertThat(reservations.findById(held.id()).orElseThrow().status())
                     .isEqualTo(ReservationStatus.HELD);
@@ -141,7 +167,37 @@ class ReservationServiceTest {
 
         @Test
         void failsForUnknownReservation() {
-            assertThatThrownBy(() -> service.confirm(UUID.randomUUID()))
+            assertThatThrownBy(() -> service.confirm(userId, UUID.randomUUID()))
+                    .isInstanceOf(ReservationNotFoundException.class);
+        }
+
+        @Test
+        void cannotConfirmAnotherUsersReservation() {
+            final Reservation held = givenHeldReservation(2);
+
+            assertThatThrownBy(() -> service.confirm(UUID.randomUUID(), held.id()))
+                    .isInstanceOf(ReservationNotFoundException.class);
+            assertThat(reservations.findById(held.id()).orElseThrow().status())
+                    .isEqualTo(ReservationStatus.HELD);
+        }
+    }
+
+    /** Tests of get(): a user sees only their own reservations. */
+    @Nested
+    class Get {
+
+        @Test
+        void returnsTheUsersReservation() {
+            final Reservation held = givenHeldReservation(2);
+
+            assertThat(service.get(userId, held.id()).id()).isEqualTo(held.id());
+        }
+
+        @Test
+        void anotherUsersReservationLooksLikeAnUnknownOne() {
+            final Reservation held = givenHeldReservation(2);
+
+            assertThatThrownBy(() -> service.get(UUID.randomUUID(), held.id()))
                     .isInstanceOf(ReservationNotFoundException.class);
         }
     }
@@ -154,7 +210,7 @@ class ReservationServiceTest {
         void releasesAndReturnsTicketsToStock() {
             final Reservation held = givenHeldReservation(4);
 
-            service.release(held.id());
+            service.release(userId, held.id());
 
             assertThat(reservations.findById(held.id()).orElseThrow().status())
                     .isEqualTo(ReservationStatus.RELEASED);
@@ -164,17 +220,28 @@ class ReservationServiceTest {
         @Test
         void releasingTwiceDoesNotReturnTicketsTwice() {
             final Reservation held = givenHeldReservation(4);
-            service.release(held.id());
+            service.release(userId, held.id());
 
-            assertThatThrownBy(() -> service.release(held.id()))
+            assertThatThrownBy(() -> service.release(userId, held.id()))
                     .isInstanceOf(IllegalReservationStateException.class);
             assertThat(available()).isEqualTo(10);
         }
 
         @Test
         void failsForUnknownReservation() {
-            assertThatThrownBy(() -> service.release(UUID.randomUUID()))
+            assertThatThrownBy(() -> service.release(userId, UUID.randomUUID()))
                     .isInstanceOf(ReservationNotFoundException.class);
+        }
+
+        @Test
+        void cannotReleaseAnotherUsersReservation() {
+            final Reservation held = givenHeldReservation(4);
+
+            assertThatThrownBy(() -> service.release(UUID.randomUUID(), held.id()))
+                    .isInstanceOf(ReservationNotFoundException.class);
+            assertThat(reservations.findById(held.id()).orElseThrow().status())
+                    .isEqualTo(ReservationStatus.HELD);
+            assertThat(available()).isEqualTo(6);
         }
     }
 
@@ -209,7 +276,7 @@ class ReservationServiceTest {
         @Test
         void leavesConfirmedReservations() {
             final Reservation held = givenHeldReservation(3);
-            service.confirm(held.id());
+            service.confirm(userId, held.id());
             clock.advance(TTL.plusSeconds(1));
 
             final int expired = service.expireStale();
