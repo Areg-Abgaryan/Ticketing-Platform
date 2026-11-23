@@ -54,6 +54,11 @@ class StockControllerTest {
     }
 
     @Test
+    void totalAboveTheLimitReturns400() throws Exception {
+        createStock("{\"total\":1000001}").andExpect(status().isBadRequest());
+    }
+
+    @Test
     void availabilityOfUnknownEventReturns404() throws Exception {
         mvc.perform(get("/events/{id}/availability", eventId)).andExpect(status().isNotFound());
     }

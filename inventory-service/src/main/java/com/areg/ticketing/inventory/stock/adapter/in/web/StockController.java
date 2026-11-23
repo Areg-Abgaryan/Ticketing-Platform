@@ -6,6 +6,7 @@ package com.areg.ticketing.inventory.stock.adapter.in.web;
 import com.areg.ticketing.inventory.stock.application.StockService;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +33,7 @@ class StockController {
      */
     @PutMapping("/events/{eventId}/stock")
     ResponseEntity<StockResponse> create(@PathVariable UUID eventId, @Valid @RequestBody CreateStockRequest request) {
-        return ResponseEntity.status(201).body(StockResponse.from(stocks.create(eventId, request.total())));
+        return ResponseEntity.status(HttpStatus.CREATED).body(StockResponse.from(stocks.create(eventId, request.total())));
     }
 
     /** Shows how many tickets of an event exist and how many are still free to reserve. 404 if unknown. */
