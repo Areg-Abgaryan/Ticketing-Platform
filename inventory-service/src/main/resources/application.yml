@@ -9,3 +9,5 @@ ticketing:
   inventory:
     # How long tickets stay held while the user pays
     reservation-ttl: 10m
+    # How often the cleanup runs that gives the tickets of unpaid, expired holds back to the stock (ISO-8601)
+    expiry-sweep-interval: PT30S

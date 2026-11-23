@@ -10,9 +10,11 @@ import com.areg.ticketing.inventory.stock.application.StockService;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /** Creates the application beans that are plain Java classes without Spring stereotype annotations. */
 @Configuration
+@EnableScheduling
 class InventoryConfig {
 
     @Bean
